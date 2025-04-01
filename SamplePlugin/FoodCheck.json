@@ -6,7 +6,7 @@
     "AssemblyVersion": "1.0.0.0",
     "DalamudApiLevel": 12,
     "LoadPriority": 0,
-    "InternalName": "FoodBuffReminder",
+    "InternalName": "FoodCheck",
     "ApplicableVersion": "any",
     "Tags": [ "food", "buff", "check" ]
 }

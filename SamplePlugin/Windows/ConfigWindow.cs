@@ -1,59 +1,104 @@
-﻿using System;
-using System.Numerics;
-using Dalamud.Interface.Windowing;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.Interface;
 using ImGuiNET;
 
-namespace SamplePlugin.Windows;
-
-public class ConfigWindow : Window, IDisposable
+namespace FoodCheck.Windows
 {
-    private Configuration Configuration;
-
-    // We give this window a constant ID using ###
-    // This allows for labels being dynamic, like "{FPS Counter}fps###XYZ counter window",
-    // and the window ID will always be "###XYZ counter window" for ImGui
-    public ConfigWindow(Plugin plugin) : base("A Wonderful Configuration Window###With a constant ID")
+    public class ConfigWindow
     {
-        Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
-                ImGuiWindowFlags.NoScrollWithMouse;
+        private Configuration config;
+        private bool isVisible = false;
 
-        Size = new Vector2(232, 90);
-        SizeCondition = ImGuiCond.Always;
-
-        Configuration = plugin.Configuration;
-    }
-
-    public void Dispose() { }
-
-    public override void PreDraw()
-    {
-        // Flags must be added or removed before Draw() is being called, or they won't apply
-        if (Configuration.IsConfigWindowMovable)
+        public ConfigWindow(Configuration config)
         {
-            Flags &= ~ImGuiWindowFlags.NoMove;
-        }
-        else
-        {
-            Flags |= ImGuiWindowFlags.NoMove;
-        }
-    }
-
-    public override void Draw()
-    {
-        // can't ref a property, so use a local copy
-        var configValue = Configuration.SomePropertyToBeSavedAndWithADefault;
-        if (ImGui.Checkbox("Random Config Bool", ref configValue))
-        {
-            Configuration.SomePropertyToBeSavedAndWithADefault = configValue;
-            // can save immediately on change, if you don't want to provide a "Save and Close" button
-            Configuration.Save();
+            this.config = config;
         }
 
-        var movable = Configuration.IsConfigWindowMovable;
-        if (ImGui.Checkbox("Movable Config Window", ref movable))
+        public void Toggle()
         {
-            Configuration.IsConfigWindowMovable = movable;
-            Configuration.Save();
+            isVisible = !isVisible;
+        }
+
+        public void Draw()
+        {
+            if (!isVisible) return;
+
+            ImGui.Begin("Food Buff Reminder Config", ref isVisible, ImGuiWindowFlags.AlwaysAutoResize);
+
+            ImGui.Text("Configure the food buff reminder settings below.");
+
+            bool notificationsEnabled = config.EnableNotifications;
+            if (ImGui.Checkbox("Enable Notifications", ref notificationsEnabled))
+            {
+                config.EnableNotifications = notificationsEnabled;
+                config.Save(Service.PluginInterface);
+            }
+
+            int warningTime = config.WarningTime / 60;
+            if (ImGui.SliderInt("Warning Time (minutes)", ref warningTime, 1, 30))
+            {
+                config.WarningTime = warningTime * 60;
+                config.Save(Service.PluginInterface);
+            }
+
+            if (ImGui.IsItemDeactivatedAfterEdit())
+            {
+                config.Save(Service.PluginInterface);
+            }
+
+            bool enableSound = config.EnableSound;
+            if (ImGui.Checkbox("Enable Sound Effect", ref enableSound))
+            {
+                config.EnableSound = enableSound;
+                config.Save(Service.PluginInterface);
+            }
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Spacing();
+
+            string[] frequencyOptions = { "Seconds", "Minutes" };
+            int selectedFormatIndex = config.FrequencyFormat == "Minutes" ? 1 : 0;
+
+            if (ImGui.Combo("Message Frequency Format", ref selectedFormatIndex, frequencyOptions, frequencyOptions.Length))
+            {
+                config.FrequencyFormat = frequencyOptions[selectedFormatIndex];
+                config.Save(Service.PluginInterface);
+            }
+
+            if (config.FrequencyFormat == "Minutes")
+            {
+                int messageFrequencyMinutes = config.MessageFrequency / 60;
+                if (ImGui.SliderInt("Message Frequency (Minutes)", ref messageFrequencyMinutes, 1, 29))
+                {
+                    config.MessageFrequency = messageFrequencyMinutes * 60;
+                    config.Save(Service.PluginInterface);
+                }
+            }
+            else
+            {
+                int messageFrequencySeconds = config.MessageFrequency;
+                if (ImGui.SliderInt("Message Frequency (Seconds)", ref messageFrequencySeconds, 1, 300))
+                {
+                    config.MessageFrequency = messageFrequencySeconds;
+                    config.Save(Service.PluginInterface);
+                }
+            }
+
+            if (ImGui.Button("Close"))
+            {
+                isVisible = false;
+            }
+
+            ImGui.End();
+        }
+
+        public void Dispose()
+        {
+            isVisible = false;
         }
     }
 }

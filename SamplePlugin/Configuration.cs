@@ -1,20 +1,25 @@
-﻿using Dalamud.Configuration;
+using Dalamud.Configuration;
 using Dalamud.Plugin;
 using System;
 
-namespace SamplePlugin;
-
-[Serializable]
-public class Configuration : IPluginConfiguration
+namespace FoodCheck
 {
-    public int Version { get; set; } = 0;
-
-    public bool IsConfigWindowMovable { get; set; } = true;
-    public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
-
-    // the below exist just to make saving less cumbersome
-    public void Save()
+    [Serializable]
+    public class Configuration : IPluginConfiguration
     {
-        Plugin.PluginInterface.SavePluginConfig(this);
+        public int Version { get; set; } = 1;
+
+        public bool EnableNotifications { get; set; } = true;
+        public int WarningTime { get; set; } = 300;
+        public int MessageFrequency { get; set; } = 60;
+        public bool EnableSound { get; set; } = true;
+        public string? FrequencyFormat { get; set; }
+
+        public void Save(IDalamudPluginInterface pluginInterface)
+        {
+            pluginInterface.SavePluginConfig(this);
+        }
+
+
     }
 }
